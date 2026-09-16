@@ -1,8 +1,68 @@
 import React, { useState } from 'react';
 import { useStore } from '../lib/store';
+import { ConfirmDelete } from '../components/ConfirmDelete';
+import type { Quote } from '../lib/types';
+
+function QuoteListItem({
+  quote,
+  onSave,
+  onDelete,
+}: {
+  quote: Quote;
+  onSave: (text: string, source: string) => void;
+  onDelete: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(quote.text);
+  const [source, setSource] = useState(quote.source);
+
+  if (editing) {
+    return (
+      <div className="quote-list-item quote-edit">
+        <textarea className="field textarea" rows={3} value={text} onChange={(e) => setText(e.target.value)} />
+        <input className="field" value={source} onChange={(e) => setSource(e.target.value)} />
+        <div className="quote-item-actions">
+          <button
+            className="text-btn"
+            disabled={!text.trim()}
+            onClick={() => {
+              onSave(text.trim(), source.trim());
+              setEditing(false);
+            }}
+          >
+            Save
+          </button>
+          <button
+            className="text-btn"
+            onClick={() => {
+              setText(quote.text);
+              setSource(quote.source);
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="quote-list-item">
+      <p className="quote-text">“{quote.text}”</p>
+      {quote.source && <p className="quote-source">— {quote.source}</p>}
+      <div className="quote-item-actions">
+        <button className="text-btn" onClick={() => setEditing(true)}>
+          Edit
+        </button>
+        <ConfirmDelete onConfirm={onDelete} />
+      </div>
+    </div>
+  );
+}
 
 export function KeptWords() {
-  const { quotes, addQuote, featuredQuote } = useStore();
+  const { quotes, addQuote, updateQuote, deleteQuote, featuredQuote } = useStore();
   const [text, setText] = useState('');
   const [source, setSource] = useState('');
 
@@ -54,10 +114,12 @@ export function KeptWords() {
         ) : (
           <div className="quote-list">
             {quotes.map((q) => (
-              <div key={q.id} className="quote-list-item">
-                <p className="quote-text">“{q.text}”</p>
-                {q.source && <p className="quote-source">— {q.source}</p>}
-              </div>
+              <QuoteListItem
+                key={q.id}
+                quote={q}
+                onSave={(t, s) => updateQuote(q.id, t, s)}
+                onDelete={() => deleteQuote(q.id)}
+              />
             ))}
           </div>
         )}

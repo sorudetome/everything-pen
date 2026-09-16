@@ -3,10 +3,19 @@ import { useStore } from '../lib/store';
 import { formatFullDate } from '../lib/storage';
 import { MoodDot } from '../components/MoodDot';
 import { Chip } from '../components/Chip';
+import { ConfirmDelete } from '../components/ConfirmDelete';
 import type { ScreenId } from '../lib/types';
 
-export function EntryDetail({ entryId, navigate }: { entryId: string | null; navigate: (s: ScreenId) => void }) {
-  const { entries } = useStore();
+export function EntryDetail({
+  entryId,
+  navigate,
+  onEdit,
+}: {
+  entryId: string | null;
+  navigate: (s: ScreenId) => void;
+  onEdit: (id: string) => void;
+}) {
+  const { entries, deleteEntry } = useStore();
   const entry = entries.find((e) => e.id === entryId);
 
   if (!entry) {
@@ -22,9 +31,22 @@ export function EntryDetail({ entryId, navigate }: { entryId: string | null; nav
 
   return (
     <div className="screen">
-      <button className="back-link" onClick={() => navigate('entries')}>
-        ‹ Entries
-      </button>
+      <div className="screen-title-row">
+        <button className="back-link" onClick={() => navigate('entries')}>
+          ‹ Entries
+        </button>
+        <div className="detail-actions">
+          <button className="text-btn" onClick={() => onEdit(entry.id)}>
+            Edit
+          </button>
+          <ConfirmDelete
+            onConfirm={() => {
+              deleteEntry(entry.id);
+              navigate('entries');
+            }}
+          />
+        </div>
+      </div>
 
       <div className="entry-detail-header">
         <MoodDot mood={entry.mood} size={12} />

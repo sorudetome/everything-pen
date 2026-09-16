@@ -30,7 +30,11 @@ interface StoreShape {
   placeholderIndex: number;
 
   addEntry: (data: { bodyText: string; mood: Mood | null; tags: string[]; drawing: Drawing | null }) => Entry;
+  updateEntry: (id: string, data: { bodyText: string; mood: Mood | null; tags: string[]; drawing: Drawing | null }) => void;
+  deleteEntry: (id: string) => void;
   addQuote: (text: string, source: string) => void;
+  updateQuote: (id: string, text: string, source: string) => void;
+  deleteQuote: (id: string) => void;
   featuredQuote: Quote | null;
 
   currentBook: Book | null;
@@ -38,10 +42,18 @@ interface StoreShape {
   startBook: (title: string, author: string) => void;
   setBookRating: (bookId: string, rating: number) => void;
   addBookNote: (bookId: string, text: string) => void;
+  updateBookNote: (bookId: string, noteId: string, text: string) => void;
+  deleteBookNote: (bookId: string, noteId: string) => void;
+  updateBook: (bookId: string, title: string, author: string) => void;
+  deleteBook: (bookId: string) => void;
   finishBook: (bookId: string) => void;
 
   addImages: (dataUrls: string[]) => void;
-  updateImagePosition: (id: string, position: ImageItem['position']) => void;
+  updateImagePosition: (
+    id: string,
+    position: Partial<ImageItem['position']> | ((prev: ImageItem['position']) => Partial<ImageItem['position']>)
+  ) => void;
+  deleteImage: (id: string) => void;
 
   nextPlaceholder: () => string;
   allTags: string[];
@@ -73,12 +85,45 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [setEntries]
   );
 
+  const updateEntry: StoreShape['updateEntry'] = useCallback(
+    (id, data) => {
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.id === id ? { ...e, bodyText: data.bodyText, mood: data.mood, tags: data.tags, drawing: data.drawing } : e
+        )
+      );
+    },
+    [setEntries]
+  );
+
+  const deleteEntry: StoreShape['deleteEntry'] = useCallback(
+    (id) => {
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+    },
+    [setEntries]
+  );
+
   const addQuote: StoreShape['addQuote'] = useCallback(
     (text, source) => {
       const quote: Quote = { id: uid(), text, source, keptAt: new Date().toISOString() };
       setQuotes((prev) => [quote, ...prev]);
     },
     [setQuotes]
+  );
+
+  const updateQuote: StoreShape['updateQuote'] = useCallback(
+    (id, text, source) => {
+      setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, text, source } : q)));
+    },
+    [setQuotes]
+  );
+
+  const deleteQuote: StoreShape['deleteQuote'] = useCallback(
+    (id) => {
+      setQuotes((prev) => prev.filter((q) => q.id !== id));
+      setFeaturedLog((prev) => prev.filter((f) => f.quoteId !== id));
+    },
+    [setQuotes, setFeaturedLog]
   );
 
   useEffect(() => {
@@ -145,6 +190,40 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [setBooks]
   );
 
+  const updateBookNote: StoreShape['updateBookNote'] = useCallback(
+    (bookId, noteId, text) => {
+      setBooks((prev) =>
+        prev.map((b) =>
+          b.id === bookId ? { ...b, notes: b.notes.map((n) => (n.id === noteId ? { ...n, text } : n)) } : b
+        )
+      );
+    },
+    [setBooks]
+  );
+
+  const deleteBookNote: StoreShape['deleteBookNote'] = useCallback(
+    (bookId, noteId) => {
+      setBooks((prev) =>
+        prev.map((b) => (b.id === bookId ? { ...b, notes: b.notes.filter((n) => n.id !== noteId) } : b))
+      );
+    },
+    [setBooks]
+  );
+
+  const updateBook: StoreShape['updateBook'] = useCallback(
+    (bookId, title, author) => {
+      setBooks((prev) => prev.map((b) => (b.id === bookId ? { ...b, title, author } : b)));
+    },
+    [setBooks]
+  );
+
+  const deleteBook: StoreShape['deleteBook'] = useCallback(
+    (bookId) => {
+      setBooks((prev) => prev.filter((b) => b.id !== bookId));
+    },
+    [setBooks]
+  );
+
   const finishBook: StoreShape['finishBook'] = useCallback(
     (bookId) => {
       setBooks((prev) =>
@@ -158,17 +237,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (dataUrls) => {
       setImages((prev) => {
         const startIndex = prev.length;
-        const additions: ImageItem[] = dataUrls.map((dataUrl, i) => ({
-          id: uid(),
-          dataUrl,
-          uploadedAt: new Date().toISOString(),
-          sortIndex: startIndex + i,
-          position: {
-            x: 20 + ((startIndex + i) * 37) % 200,
-            y: 20 + ((startIndex + i) * 53) % 300,
-            rotation: (((startIndex + i) * 17) % 20) - 10,
-          },
-        }));
+        const columns = 3;
+        const additions: ImageItem[] = dataUrls.map((dataUrl, i) => {
+          const n = startIndex + i;
+          const col = n % columns;
+          const row = Math.floor(n / columns);
+          return {
+            id: uid(),
+            dataUrl,
+            uploadedAt: new Date().toISOString(),
+            sortIndex: n,
+            position: {
+              x: 16 + col * 125 + ((n * 13) % 20),
+              y: 16 + row * 130 + ((n * 19) % 20),
+              rotation: (((n * 17) % 20) - 10),
+              scale: 1,
+            },
+          };
+        });
         return [...additions, ...prev];
       });
     },
@@ -177,7 +263,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const updateImagePosition: StoreShape['updateImagePosition'] = useCallback(
     (id, position) => {
-      setImages((prev) => prev.map((img) => (img.id === id ? { ...img, position } : img)));
+      setImages((prev) =>
+        prev.map((img) => {
+          if (img.id !== id) return img;
+          const patch = typeof position === 'function' ? position(img.position) : position;
+          return { ...img, position: { ...img.position, ...patch } };
+        })
+      );
+    },
+    [setImages]
+  );
+
+  const deleteImage: StoreShape['deleteImage'] = useCallback(
+    (id) => {
+      setImages((prev) => prev.filter((img) => img.id !== id));
     },
     [setImages]
   );
@@ -202,16 +301,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     featuredLog,
     placeholderIndex,
     addEntry,
+    updateEntry,
+    deleteEntry,
     addQuote,
+    updateQuote,
+    deleteQuote,
     featuredQuote,
     currentBook,
     finishedBooks,
     startBook,
     setBookRating,
     addBookNote,
+    updateBookNote,
+    deleteBookNote,
+    updateBook,
+    deleteBook,
     finishBook,
     addImages,
     updateImagePosition,
+    deleteImage,
     nextPlaceholder,
     allTags,
   };

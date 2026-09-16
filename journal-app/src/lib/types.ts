@@ -47,6 +47,7 @@ export interface ImagePosition {
   x: number;
   y: number;
   rotation: number;
+  scale: number;
 }
 
 export interface ImageItem {

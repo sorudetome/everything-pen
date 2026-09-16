@@ -6,15 +6,23 @@ import { Chip } from '../components/Chip';
 import { DrawPad } from '../components/DrawPad';
 import type { DrawingStroke, Mood, ScreenId } from '../lib/types';
 
-export function NewEntry({ navigate }: { navigate: (s: ScreenId) => void }) {
-  const { addEntry, allTags, nextPlaceholder } = useStore();
-  const [mode, setMode] = useState<'write' | 'draw'>('write');
-  const [mood, setMood] = useState<Mood | null>(null);
-  const [text, setText] = useState('');
-  const [activeTags, setActiveTags] = useState<string[]>([]);
+export function NewEntry({
+  navigate,
+  editEntryId,
+}: {
+  navigate: (s: ScreenId) => void;
+  editEntryId?: string | null;
+}) {
+  const { entries, addEntry, updateEntry, allTags, nextPlaceholder } = useStore();
+  const editingEntry = editEntryId ? entries.find((e) => e.id === editEntryId) ?? null : null;
+
+  const [mode, setMode] = useState<'write' | 'draw'>(editingEntry?.drawing ? 'draw' : 'write');
+  const [mood, setMood] = useState<Mood | null>(editingEntry?.mood ?? null);
+  const [text, setText] = useState(editingEntry?.bodyText ?? '');
+  const [activeTags, setActiveTags] = useState<string[]>(editingEntry?.tags ?? []);
   const [newTag, setNewTag] = useState('');
-  const [strokes, setStrokes] = useState<DrawingStroke[]>([]);
-  const [drawingDataUrl, setDrawingDataUrl] = useState('');
+  const [strokes, setStrokes] = useState<DrawingStroke[]>(editingEntry?.drawing?.strokes ?? []);
+  const [drawingDataUrl, setDrawingDataUrl] = useState(editingEntry?.drawing?.dataUrl ?? '');
 
   const [placeholder, setPlaceholder] = useState('');
   useEffect(() => {
@@ -35,13 +43,19 @@ export function NewEntry({ navigate }: { navigate: (s: ScreenId) => void }) {
   }
 
   function save() {
-    addEntry({
+    const data = {
       bodyText: text.trim(),
       mood,
       tags: activeTags,
       drawing: strokes.length > 0 ? { strokes, dataUrl: drawingDataUrl } : null,
-    });
-    navigate('home');
+    };
+    if (editingEntry) {
+      updateEntry(editingEntry.id, data);
+      navigate('entryDetail');
+    } else {
+      addEntry(data);
+      navigate('home');
+    }
   }
 
   const canSave = text.trim().length > 0 || strokes.length > 0;
@@ -49,7 +63,9 @@ export function NewEntry({ navigate }: { navigate: (s: ScreenId) => void }) {
   return (
     <div className="screen">
       <h1 className="screen-title">
-        {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+        {editingEntry
+          ? 'Edit entry'
+          : new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
       </h1>
 
       <section className="section">
@@ -126,7 +142,7 @@ export function NewEntry({ navigate }: { navigate: (s: ScreenId) => void }) {
       <footer className="entry-footer">
         <span className="word-count">{wordCount} words</span>
         <button className="primary-btn" disabled={!canSave} onClick={save}>
-          Save entry
+          {editingEntry ? 'Save changes' : 'Save entry'}
         </button>
       </footer>
     </div>

@@ -1,7 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { DrawingStroke } from '../lib/types';
 
-const INK_COLORS = ['#EDEDEC', '#9AA7B5', '#8B94A0', '#4A5058', '#D9534F'];
+const INK_COLORS = [
+  '#EDEDEC', // white
+  '#000000', // black
+  '#EF4444', // red
+  '#F5A623', // orange
+  '#EAB308', // yellow
+  '#22C55E', // green
+  '#3B82F6', // blue
+  '#A855F7', // purple
+  '#EC4899', // pink
+  '#9AA7B5', // slate (app accent)
+];
 
 export function DrawPad({
   strokes,
@@ -49,7 +60,11 @@ export function DrawPad({
   }
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // pointer capture isn't always available (e.g. certain synthetic/test inputs); drawing still works without it
+    }
     drawingRef.current = true;
     currentStrokeRef.current = { color, points: [pointFromEvent(e)] };
   }
@@ -98,7 +113,7 @@ export function DrawPad({
             />
           ))}
         </div>
-        <button className="text-btn" onClick={clear}>
+        <button className="text-btn clear-btn" onClick={clear}>
           Clear
         </button>
       </div>
