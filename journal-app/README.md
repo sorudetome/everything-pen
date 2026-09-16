@@ -9,6 +9,17 @@ npm install
 npm run dev
 ```
 
+## Offline / installable
+
+This is a PWA (`vite-plugin-pwa`, generated `sw.js` + web manifest). `npm run dev` only precaches a minimal shell — to see the real offline behavior, build and serve the production bundle:
+
+```bash
+npm run build
+npm run preview
+```
+
+Open it, let it load once, then go offline (or kill the server) and reload — it keeps working from cache. On a phone, "Add to Home Screen" installs it with the app icon and no browser chrome (`display: standalone`). Data already lived in `localStorage`, so offline was always fine for reads/writes — this just makes the app shell itself load without a network.
+
 ## What's real vs. still a stub
 
 Per the handoff doc's "Build notes," everything the mockup left decorative is wired to real logic here:
