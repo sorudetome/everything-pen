@@ -17,32 +17,60 @@ function readAsDataURL(file: File): Promise<string> {
   });
 }
 
-function GridTile({ image, onDelete }: { image: ImageItem; onDelete: () => void }) {
+function clamp(v: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function GridTile({
+  image,
+  editMode,
+  onDelete,
+}: {
+  image: ImageItem;
+  editMode: boolean;
+  onDelete: () => void;
+}) {
   const [confirming, setConfirming] = useState(false);
 
   return (
     <div className="image-grid-tile">
       <img src={image.dataUrl} alt="" />
-      {confirming ? (
-        <div className="grid-tile-confirm">
-          <span>Delete?</span>
-          <div className="grid-tile-confirm-actions">
-            <button className="text-btn danger" onClick={onDelete}>
-              Yes
-            </button>
-            <button className="text-btn" onClick={() => setConfirming(false)}>
-              No
-            </button>
+      {editMode &&
+        (confirming ? (
+          <div className="grid-tile-confirm">
+            <span>Delete?</span>
+            <div className="grid-tile-confirm-actions">
+              <button className="text-btn danger" onClick={onDelete}>
+                Yes
+              </button>
+              <button className="text-btn" onClick={() => setConfirming(false)}>
+                No
+              </button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <button className="grid-tile-delete" aria-label="Delete image" onClick={() => setConfirming(true)}>
-          ✕
-        </button>
-      )}
+        ) : (
+          <button className="grid-tile-delete" aria-label="Delete image" onClick={() => setConfirming(true)}>
+            ✕
+          </button>
+        ))}
     </div>
   );
 }
+
+type Point = { x: number; y: number };
+
+type Gesture =
+  | { mode: 'none' }
+  | { mode: 'drag'; startClient: Point; startPos: Point }
+  | {
+      mode: 'pinch';
+      startDist: number;
+      startAngle: number;
+      startScale: number;
+      startRotation: number;
+      startMid: Point;
+      startPos: Point;
+    };
 
 function FreeformTile({
   image,
@@ -56,39 +84,97 @@ function FreeformTile({
   selected: boolean;
   onSelect: (id: string | null) => void;
   onDrag: (id: string, position: Partial<ImageItem['position']>) => void;
-  onAdjust: (id: string, updater: (prev: ImageItem['position']) => Partial<ImageItem['position']>) => void;
+  onAdjust: (
+    id: string,
+    updater: (prev: ImageItem['position']) => Partial<ImageItem['position']>
+  ) => void;
   onDelete: (id: string) => void;
 }) {
-  const draggingRef = useRef(false);
+  const pointersRef = useRef(new Map<number, Point>());
+  const gestureRef = useRef<Gesture>({ mode: 'none' });
   const movedRef = useRef(0);
-  const originRef = useRef({ x: 0, y: 0, startX: 0, startY: 0 });
   const size = TILE_BASE * image.position.scale;
+
+  function recomputeGesture() {
+    const pts = [...pointersRef.current.values()];
+    if (pts.length === 1) {
+      gestureRef.current = {
+        mode: 'drag',
+        startClient: pts[0],
+        startPos: { x: image.position.x, y: image.position.y },
+      };
+    } else if (pts.length >= 2) {
+      const [a, b] = pts;
+      gestureRef.current = {
+        mode: 'pinch',
+        startDist: Math.hypot(b.x - a.x, b.y - a.y) || 1,
+        startAngle: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI,
+        startScale: image.position.scale,
+        startRotation: image.position.rotation,
+        startMid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+        startPos: { x: image.position.x, y: image.position.y },
+      };
+    } else {
+      gestureRef.current = { mode: 'none' };
+    }
+  }
 
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     e.stopPropagation();
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
-      // pointer capture isn't always available (e.g. certain synthetic/test inputs); dragging still works without it
+      // pointer capture isn't always available (e.g. certain synthetic/test inputs); gestures still work without it
     }
-    draggingRef.current = true;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     movedRef.current = 0;
-    originRef.current = { x: image.position.x, y: image.position.y, startX: e.clientX, startY: e.clientY };
+    recomputeGesture();
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!draggingRef.current) return;
-    const dx = e.clientX - originRef.current.startX;
-    const dy = e.clientY - originRef.current.startY;
-    movedRef.current = Math.max(movedRef.current, Math.abs(dx), Math.abs(dy));
-    onDrag(image.id, { x: originRef.current.x + dx, y: originRef.current.y + dy });
+    if (!pointersRef.current.has(e.pointerId)) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const g = gestureRef.current;
+
+    if (g.mode === 'drag') {
+      const p = [...pointersRef.current.values()][0];
+      const dx = p.x - g.startClient.x;
+      const dy = p.y - g.startClient.y;
+      movedRef.current = Math.max(movedRef.current, Math.abs(dx), Math.abs(dy));
+      onDrag(image.id, { x: g.startPos.x + dx, y: g.startPos.y + dy });
+    } else if (g.mode === 'pinch') {
+      const pts = [...pointersRef.current.values()];
+      if (pts.length < 2) return;
+      const [a, b] = pts;
+      const dist = Math.hypot(b.x - a.x, b.y - a.y);
+      const angle = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const newScale = clamp(g.startScale * (dist / g.startDist), MIN_SCALE, MAX_SCALE);
+      const newRotation = g.startRotation + (angle - g.startAngle);
+      const dx = mid.x - g.startMid.x;
+      const dy = mid.y - g.startMid.y;
+      movedRef.current = DRAG_THRESHOLD; // a pinch is never a tap
+      onAdjust(image.id, () => ({
+        scale: newScale,
+        rotation: newRotation,
+        x: g.startPos.x + dx,
+        y: g.startPos.y + dy,
+      }));
+    }
   }
 
-  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+  function endPointer(e: React.PointerEvent<HTMLDivElement>) {
     e.stopPropagation();
-    draggingRef.current = false;
-    if (movedRef.current < DRAG_THRESHOLD) {
-      onSelect(selected ? null : image.id);
+    const wasDrag = gestureRef.current.mode === 'drag';
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size === 0) {
+      if (wasDrag && movedRef.current < DRAG_THRESHOLD) {
+        onSelect(selected ? null : image.id);
+      }
+      gestureRef.current = { mode: 'none' };
+      movedRef.current = 0;
+    } else {
+      recomputeGesture();
     }
   }
 
@@ -101,12 +187,14 @@ function FreeformTile({
         width: size,
         height: size,
         transform: `rotate(${image.position.rotation}deg)`,
+        touchAction: 'none',
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={() => {
-        draggingRef.current = false;
+      onPointerUp={endPointer}
+      onPointerCancel={endPointer}
+      onPointerLeave={(e) => {
+        if (pointersRef.current.has(e.pointerId)) endPointer(e);
       }}
     >
       <img src={image.dataUrl} alt="" draggable={false} />
@@ -153,6 +241,7 @@ export function Images() {
   const { images, addImages, updateImagePosition, deleteImage } = useStore();
   const [view, setView] = useState<'grid' | 'freeform'>('grid');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [gridEditMode, setGridEditMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFiles(fileList: FileList | null) {
@@ -173,9 +262,16 @@ export function Images() {
     <div className="screen">
       <div className="screen-title-row">
         <h1 className="screen-title">Images</h1>
-        <button className="icon-btn" onClick={() => fileInputRef.current?.click()} aria-label="Upload image">
-          +
-        </button>
+        <div className="images-header-actions">
+          {view === 'grid' && images.length > 0 && (
+            <button className="see-all" onClick={() => setGridEditMode((v) => !v)}>
+              {gridEditMode ? 'Done' : 'Edit'}
+            </button>
+          )}
+          <button className="icon-btn" onClick={() => fileInputRef.current?.click()} aria-label="Upload image">
+            +
+          </button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
@@ -203,7 +299,7 @@ export function Images() {
             .slice()
             .sort((a, b) => b.sortIndex - a.sortIndex)
             .map((img) => (
-              <GridTile key={img.id} image={img} onDelete={() => deleteImage(img.id)} />
+              <GridTile key={img.id} image={img} editMode={gridEditMode} onDelete={() => deleteImage(img.id)} />
             ))}
         </div>
       ) : (

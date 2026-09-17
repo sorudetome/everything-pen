@@ -1,11 +1,11 @@
 import React from 'react';
 import type { ScreenId } from '../lib/types';
 import {
+  ArchiveIcon,
   BarChartIcon,
   CalendarIcon,
   GridIcon,
   HouseIcon,
-  OpenBookIcon,
   PlusIcon,
   SpeechBubbleIcon,
 } from './icons';
@@ -21,7 +21,7 @@ const ITEMS: NavItem[] = [
   { id: 'words', label: 'Words', icon: (c) => <SpeechBubbleIcon color={c} /> },
   { id: 'entries', label: 'Entries', icon: (c) => <CalendarIcon color={c} /> },
   { id: 'new', label: 'New', icon: (c) => <PlusIcon color={c} size={20} /> },
-  { id: 'reading', label: 'Reading', icon: (c) => <OpenBookIcon color={c} /> },
+  { id: 'storage', label: 'Storage', icon: (c) => <ArchiveIcon color={c} /> },
   { id: 'insights', label: 'Insights', icon: (c) => <BarChartIcon color={c} /> },
   { id: 'images', label: 'Images', icon: (c) => <GridIcon color={c} /> },
 ];

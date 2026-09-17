@@ -40,15 +40,12 @@ export function PlusIcon({ size = 22, color = 'currentColor' }: IconProps) {
   );
 }
 
-export function OpenBookIcon({ size = 22, color = 'currentColor' }: IconProps) {
+export function ArchiveIcon({ size = 22, color = 'currentColor' }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.6}>
-      <path
-        d="M12 6.5c-1.5-1.2-4-1.7-7-1.5v13c3 -.2 5.5.3 7 1.5 1.5-1.2 4-1.7 7-1.5v-13c-3-.2-5.5.3-7 1.5Z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M12 6.5v13" />
+      <rect x="3.5" y="4.5" width="17" height="5" rx="1.2" strokeLinejoin="round" />
+      <path d="M4.5 9.5v8.3a1.2 1.2 0 0 0 1.2 1.2h12.6a1.2 1.2 0 0 0 1.2-1.2V9.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 13h4" strokeLinecap="round" />
     </svg>
   );
 }
@@ -68,17 +65,6 @@ export function GridIcon({ size = 22, color = 'currentColor' }: IconProps) {
       <rect x="13" y="4" width="7" height="7" rx="1" />
       <rect x="4" y="13" width="7" height="7" rx="1" />
       <rect x="13" y="13" width="7" height="7" rx="1" />
-    </svg>
-  );
-}
-
-export function StarIcon({ size = 20, filled = false, color = 'var(--accent)' }: IconProps & { filled?: boolean }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'} stroke={color} strokeWidth={1.4}>
-      <path
-        d="m12 3 2.7 5.7 6.2.6-4.6 4.3 1.2 6.2L12 16.9l-5.5 2.9 1.2-6.2-4.6-4.3 6.2-.6Z"
-        strokeLinejoin="round"
-      />
     </svg>
   );
 }

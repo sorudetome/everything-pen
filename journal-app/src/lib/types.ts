@@ -26,21 +26,10 @@ export interface Quote {
   keptAt: string;
 }
 
-export interface BookNote {
+export interface StorageItem {
   id: string;
-  date: string;
-  text: string;
-}
-
-export interface Book {
-  id: string;
-  title: string;
-  author: string;
-  rating: number; // 0-5
-  status: 'reading' | 'finished';
-  notes: BookNote[];
-  startedAt: string;
-  finishedAt: string | null;
+  content: string;
+  addedAt: string;
 }
 
 export interface ImagePosition {
@@ -68,7 +57,7 @@ export type ScreenId =
   | 'words'
   | 'entries'
   | 'new'
-  | 'reading'
+  | 'storage'
   | 'insights'
   | 'images'
   | 'entryDetail';

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { StoreProvider } from './lib/store';
+import { PasswordGate } from './components/PasswordGate';
 import { BottomNav } from './components/BottomNav';
 import { Home } from './screens/Home';
 import { KeptWords } from './screens/KeptWords';
 import { NewEntry } from './screens/NewEntry';
 import { Entries } from './screens/Entries';
 import { EntryDetail } from './screens/EntryDetail';
-import { Reading } from './screens/Reading';
+import { Storage } from './screens/Storage';
 import { Insights } from './screens/Insights';
 import { Images } from './screens/Images';
 import type { ScreenId } from './lib/types';
@@ -41,7 +42,7 @@ function Shell() {
         {screen === 'entryDetail' && (
           <EntryDetail entryId={selectedEntryId} navigate={navigate} onEdit={editEntry} />
         )}
-        {screen === 'reading' && <Reading />}
+        {screen === 'storage' && <Storage />}
         {screen === 'insights' && <Insights navigate={navigate} />}
         {screen === 'images' && <Images />}
       </div>
@@ -53,7 +54,9 @@ function Shell() {
 export default function App() {
   return (
     <StoreProvider>
-      <Shell />
+      <PasswordGate>
+        <Shell />
+      </PasswordGate>
     </StoreProvider>
   );
 }

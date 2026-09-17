@@ -11,7 +11,7 @@ function sameDay(a: Date, b: Date) {
 
 export function Entries({ openEntry }: { openEntry: (id: string) => void }) {
   const { entries, allTags } = useStore();
-  const [view, setView] = useState<'calendar' | 'tags'>('calendar');
+  const [view, setView] = useState<'calendar' | 'tags' | 'all'>('calendar');
   const [monthDate, setMonthDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -19,6 +19,11 @@ export function Entries({ openEntry }: { openEntry: (id: string) => void }) {
   const dayEntries = useMemo(
     () => entries.filter((e) => sameDay(new Date(e.date), selectedDate)),
     [entries, selectedDate]
+  );
+
+  const allChronological = useMemo(
+    () => entries.slice().sort((a, b) => b.date.localeCompare(a.date)),
+    [entries]
   );
 
   const tagCounts = useMemo(() => {
@@ -35,18 +40,37 @@ export function Entries({ openEntry }: { openEntry: (id: string) => void }) {
 
   return (
     <div className="screen">
-      <h1 className="screen-title">Entries</h1>
+      <div className="screen-title-row">
+        <h1 className="screen-title">Entries</h1>
+        <button className="see-all" onClick={() => setView('all')}>
+          All entries
+        </button>
+      </div>
 
       <SegmentedToggle
         options={[
           { id: 'calendar', label: 'Calendar' },
           { id: 'tags', label: 'Tags' },
         ]}
-        value={view}
+        value={view === 'all' ? 'calendar' : view}
         onChange={setView}
       />
 
-      {view === 'calendar' ? (
+      {view === 'all' ? (
+        <section className="section">
+          <div className="section-row">
+            <div className="section-label">All entries, newest first</div>
+            <button className="see-all" onClick={() => setView('calendar')}>
+              Back
+            </button>
+          </div>
+          {allChronological.length === 0 ? (
+            <p className="empty-hint">No entries yet.</p>
+          ) : (
+            allChronological.map((e) => <EntryRow key={e.id} entry={e} onOpen={openEntry} />)
+          )}
+        </section>
+      ) : view === 'calendar' ? (
         <>
           <CalendarGrid
             monthDate={monthDate}

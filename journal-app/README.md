@@ -1,6 +1,6 @@
 # Journal
 
-React + TypeScript implementation of the "Personal Journal App" spec (Claude Docs handoff). Dark, Georgia/Verdana, 8 screens behind a persistent bottom nav. State persists to `localStorage` — no backend.
+React + TypeScript personal journaling app (originally built from a Claude Docs handoff spec, since customized). Dark, Georgia/Verdana, password-gated, behind a persistent bottom nav. State persists to `localStorage` — no backend.
 
 ## Run
 
@@ -8,6 +8,10 @@ React + TypeScript implementation of the "Personal Journal App" spec (Claude Doc
 npm install
 npm run dev
 ```
+
+## Password lock
+
+The app shows a lock screen on every fresh open (`sessionStorage`-scoped, so it re-prompts each new session/tab but not on every reload within one). The passphrase is never stored in plaintext — only its SHA-256 digest is hardcoded (`src/components/PasswordGate.tsx`), checked client-side via the Web Crypto API. This deters casual "just open the file and read it" access; it is **not** real security — anyone with devtools access to a running session, or willing to brute-force the hash offline, can get past it. There is no backend to enforce this.
 
 ## Offline / installable
 
@@ -18,24 +22,33 @@ npm run build
 npm run preview
 ```
 
-Open it, let it load once, then go offline (or kill the server) and reload — it keeps working from cache. On a phone, "Add to Home Screen" installs it with the app icon and no browser chrome (`display: standalone`). Data already lived in `localStorage`, so offline was always fine for reads/writes — this just makes the app shell itself load without a network.
+Open it, let it load once, then go offline (or kill the server) and reload — it keeps working from cache. On a phone, "Add to Home Screen" installs it with the app icon and no browser chrome (`display: standalone`).
+
+## Screens
+
+Home, Kept Words, New/Edit Entry, Entries (Calendar / Tags / All-chronological), Entry Detail, Insights, Images, and **Storage** — a general link/media/note dump: paste anything, it's timestamped and listed newest-first, with URLs auto-linkified. (This replaced an earlier "Reading" book-tracker screen entirely — no book/reading code remains.)
+
+## Editing and deletion
+
+Every user-created thing — quotes, journal entries, storage items, images — supports edit and/or delete via an inline confirm pattern (`ConfirmDelete`), not native browser dialogs.
+
+## Images
+
+- Grid view: delete controls are hidden by default (tap "Edit" to reveal them, "Done" to hide again) to keep the view clean.
+- Freeform view: images support real touch gestures — one-finger drag to move, two-finger pinch to resize, two-finger twist to rotate — alongside a tap-to-select toolbar (−/+/rotate/delete) for desktop/precision use. The board grows to fit wherever images get dragged instead of clipping at a fixed height.
 
 ## What's real vs. still a stub
 
-Per the handoff doc's "Build notes," everything the mockup left decorative is wired to real logic here:
-
 - Image upload uses an actual file picker → `FileReader` → stored as data URLs in `localStorage`.
-- The drawing pad captures real pointer input onto a `<canvas>` and rasterizes to a PNG saved with the entry.
+- The drawing pad captures real pointer input onto a `<canvas>`, offers a full basic color palette, and rasterizes to a PNG saved with the entry.
 - New Entry's placeholder rotates deterministically (tracks the last shown index) instead of picking randomly on each load.
-- Save/Add/Finish/Log buttons all persist to `localStorage` via `src/lib/store.tsx`.
 - Calendar month arrows page real months.
+- Line breaks in quotes, entries, and storage items are preserved on display (`white-space: pre-wrap`).
 
-Assumptions carried over from the doc's "Clarifications" section:
+Assumptions:
 
 - Quote-of-the-day is chosen randomly per calendar day, avoiding the last ~5 shown.
-- Only one book can be `status: reading` at a time; finishing it clears the slot until a new one is started from a small inline form.
-- One drawing per entry.
-- Insights' "total entries" stat tile doubles as the dedicated deep link to the full Entries list.
+- Insights' "total entries" stat tile doubles as a deep link to the full Entries list; Entries also has its own "All entries" chronological link.
 - No settings/account/export/notifications screens (intentionally out of scope).
 
-Not implemented (genuinely out of scope, not decided against): real backend sync, auth, or export — this is local-only, matching the doc.
+Not implemented (genuinely out of scope, not decided against): real backend sync, real auth, or export — this is local-only.

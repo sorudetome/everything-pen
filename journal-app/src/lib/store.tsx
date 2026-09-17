@@ -1,13 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import type {
-  Book,
-  BookNote,
   Drawing,
   Entry,
   ImageItem,
   Mood,
   Quote,
   QuoteFeatureLog,
+  StorageItem,
 } from './types';
 import { todayISODate, uid, useLocalStorage } from './storage';
 
@@ -24,7 +23,7 @@ export const PLACEHOLDERS = [
 interface StoreShape {
   entries: Entry[];
   quotes: Quote[];
-  books: Book[];
+  storageItems: StorageItem[];
   images: ImageItem[];
   featuredLog: QuoteFeatureLog[];
   placeholderIndex: number;
@@ -37,16 +36,9 @@ interface StoreShape {
   deleteQuote: (id: string) => void;
   featuredQuote: Quote | null;
 
-  currentBook: Book | null;
-  finishedBooks: Book[];
-  startBook: (title: string, author: string) => void;
-  setBookRating: (bookId: string, rating: number) => void;
-  addBookNote: (bookId: string, text: string) => void;
-  updateBookNote: (bookId: string, noteId: string, text: string) => void;
-  deleteBookNote: (bookId: string, noteId: string) => void;
-  updateBook: (bookId: string, title: string, author: string) => void;
-  deleteBook: (bookId: string) => void;
-  finishBook: (bookId: string) => void;
+  addStorageItem: (content: string) => void;
+  updateStorageItem: (id: string, content: string) => void;
+  deleteStorageItem: (id: string) => void;
 
   addImages: (dataUrls: string[]) => void;
   updateImagePosition: (
@@ -64,7 +56,7 @@ const StoreContext = createContext<StoreShape | null>(null);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [entries, setEntries] = useLocalStorage<Entry[]>('journal.entries', []);
   const [quotes, setQuotes] = useLocalStorage<Quote[]>('journal.quotes', []);
-  const [books, setBooks] = useLocalStorage<Book[]>('journal.books', []);
+  const [storageItems, setStorageItems] = useLocalStorage<StorageItem[]>('journal.storageItems', []);
   const [images, setImages] = useLocalStorage<ImageItem[]>('journal.images', []);
   const [featuredLog, setFeaturedLog] = useLocalStorage<QuoteFeatureLog[]>('journal.featuredLog', []);
   const [placeholderIndex, setPlaceholderIndex] = useLocalStorage<number>('journal.placeholderIndex', -1);
@@ -150,87 +142,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return quotes[0];
   }, [quotes, featuredLog]);
 
-  const currentBook = useMemo(() => books.find((b) => b.status === 'reading') ?? null, [books]);
-  const finishedBooks = useMemo(
-    () => books.filter((b) => b.status === 'finished').sort((a, b) => (b.finishedAt ?? '').localeCompare(a.finishedAt ?? '')),
-    [books]
+  const addStorageItem: StoreShape['addStorageItem'] = useCallback(
+    (content) => {
+      const item: StorageItem = { id: uid(), content, addedAt: new Date().toISOString() };
+      setStorageItems((prev) => [item, ...prev]);
+    },
+    [setStorageItems]
   );
 
-  const startBook: StoreShape['startBook'] = useCallback(
-    (title, author) => {
-      setBooks((prev) => [
-        ...prev,
-        {
-          id: uid(),
-          title,
-          author,
-          rating: 0,
-          status: 'reading',
-          notes: [],
-          startedAt: new Date().toISOString(),
-          finishedAt: null,
-        },
-      ]);
+  const updateStorageItem: StoreShape['updateStorageItem'] = useCallback(
+    (id, content) => {
+      setStorageItems((prev) => prev.map((s) => (s.id === id ? { ...s, content } : s)));
     },
-    [setBooks]
+    [setStorageItems]
   );
 
-  const setBookRating: StoreShape['setBookRating'] = useCallback(
-    (bookId, rating) => {
-      setBooks((prev) => prev.map((b) => (b.id === bookId ? { ...b, rating } : b)));
+  const deleteStorageItem: StoreShape['deleteStorageItem'] = useCallback(
+    (id) => {
+      setStorageItems((prev) => prev.filter((s) => s.id !== id));
     },
-    [setBooks]
-  );
-
-  const addBookNote: StoreShape['addBookNote'] = useCallback(
-    (bookId, text) => {
-      const note: BookNote = { id: uid(), date: new Date().toISOString(), text };
-      setBooks((prev) => prev.map((b) => (b.id === bookId ? { ...b, notes: [note, ...b.notes] } : b)));
-    },
-    [setBooks]
-  );
-
-  const updateBookNote: StoreShape['updateBookNote'] = useCallback(
-    (bookId, noteId, text) => {
-      setBooks((prev) =>
-        prev.map((b) =>
-          b.id === bookId ? { ...b, notes: b.notes.map((n) => (n.id === noteId ? { ...n, text } : n)) } : b
-        )
-      );
-    },
-    [setBooks]
-  );
-
-  const deleteBookNote: StoreShape['deleteBookNote'] = useCallback(
-    (bookId, noteId) => {
-      setBooks((prev) =>
-        prev.map((b) => (b.id === bookId ? { ...b, notes: b.notes.filter((n) => n.id !== noteId) } : b))
-      );
-    },
-    [setBooks]
-  );
-
-  const updateBook: StoreShape['updateBook'] = useCallback(
-    (bookId, title, author) => {
-      setBooks((prev) => prev.map((b) => (b.id === bookId ? { ...b, title, author } : b)));
-    },
-    [setBooks]
-  );
-
-  const deleteBook: StoreShape['deleteBook'] = useCallback(
-    (bookId) => {
-      setBooks((prev) => prev.filter((b) => b.id !== bookId));
-    },
-    [setBooks]
-  );
-
-  const finishBook: StoreShape['finishBook'] = useCallback(
-    (bookId) => {
-      setBooks((prev) =>
-        prev.map((b) => (b.id === bookId ? { ...b, status: 'finished', finishedAt: new Date().toISOString() } : b))
-      );
-    },
-    [setBooks]
+    [setStorageItems]
   );
 
   const addImages: StoreShape['addImages'] = useCallback(
@@ -296,7 +227,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const value: StoreShape = {
     entries,
     quotes,
-    books,
+    storageItems,
     images,
     featuredLog,
     placeholderIndex,
@@ -307,16 +238,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     updateQuote,
     deleteQuote,
     featuredQuote,
-    currentBook,
-    finishedBooks,
-    startBook,
-    setBookRating,
-    addBookNote,
-    updateBookNote,
-    deleteBookNote,
-    updateBook,
-    deleteBook,
-    finishBook,
+    addStorageItem,
+    updateStorageItem,
+    deleteStorageItem,
     addImages,
     updateImagePosition,
     deleteImage,

@@ -35,6 +35,44 @@ body {
   padding: 58px 20px 28px;
 }
 
+.lock-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  height: 100%;
+}
+
+.lock-title {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  margin: 0 0 4px;
+}
+
+.lock-hint {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin: 0 0 12px;
+}
+
+.lock-input {
+  max-width: 220px;
+  text-align: center;
+  letter-spacing: 0.1em;
+}
+
+.lock-error {
+  font-size: 12px;
+  color: #e5787c;
+  margin: 10px 0 0;
+}
+
+.lock-submit {
+  margin-top: 16px;
+}
+
 .screen-title {
   font-family: var(--font-heading);
   font-size: 24px;
@@ -50,6 +88,10 @@ body {
 
 .screen-title-row .screen-title {
   margin: 0 0 20px;
+}
+
+.screen-title-row .see-all {
+  margin-bottom: 20px;
 }
 
 .section {
@@ -109,6 +151,7 @@ body {
   font-size: 15px;
   line-height: 1.5;
   margin: 0 0 6px;
+  white-space: pre-wrap;
 }
 
 .quote-source {
@@ -201,6 +244,7 @@ body {
 .entry-row-preview {
   margin: 0 0 6px;
   font-size: 13px;
+  white-space: pre-wrap;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -582,94 +626,40 @@ body {
   border-radius: 50%;
 }
 
-/* Reading */
-.book-card {
+/* Storage */
+.storage-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  cursor: default;
+  gap: 16px;
 }
 
-.book-title {
-  font-family: var(--font-heading);
-  font-size: 16px;
-  margin: 0;
-}
-
-.book-author {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.book-header-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.book-header-row .quote-item-actions {
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-.star-rating {
-  display: flex;
-  gap: 4px;
-}
-
-.star-btn {
-  background: none;
-  border: none;
-  padding: 2px;
-  cursor: pointer;
-}
-
-.star-btn:disabled {
-  cursor: default;
-}
-
-.thought-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.thought-list.expanded {
-  padding: 12px 0 0;
-}
-
-.thought-item {
+.storage-item {
+  padding-bottom: 14px;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
 }
 
-.thought-date {
+.storage-date {
   font-size: 11px;
   color: var(--text-tertiary);
 }
 
-.thought-text {
+.storage-content {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.accordion-item {
-  border-bottom: 1px solid var(--border);
+.storage-link {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
-.accordion-row {
-  width: 100%;
-  background: none;
-  border: none;
+.storage-edit {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 0;
-  cursor: pointer;
-  color: inherit;
-  text-align: left;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* Insights */
@@ -761,6 +751,12 @@ body {
 }
 
 /* Images */
+.images-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .icon-btn {
   background: var(--bg-elevated-2);
   border: none;
