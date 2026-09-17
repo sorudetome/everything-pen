@@ -3,21 +3,21 @@
   --bg-elevated: #151515;
   --bg-elevated-2: #1D1D1E;
   --bg-elevated-3: #242426;
-  --border: #2A2A2C;
+  --border: #48484C;
   --text: #EDEDEC;
   --text-secondary: #A0A0A3;
   --text-tertiary: #67676B;
-  --accent: #9AA7B5;
-  --accent-soft: rgba(154, 167, 181, 0.16);
+  --accent: #5AA9E6;
+  --accent-soft: rgba(90, 169, 230, 0.16);
 
-  --mood-1: #B0584F;
-  --mood-2: #C4924E;
-  --mood-3: #C9BB55;
-  --mood-4: #7FA968;
-  --mood-5: #5B93B0;
+  --mood-1: #8C8C8C;
+  --mood-2: #D4A017;
+  --mood-3: #4CAF50;
+  --mood-4: #5AA9E6;
+  --mood-5: #E5787C;
 
-  --font-heading: Georgia, 'Times New Roman', serif;
-  --font-body: Verdana, Geneva, 'DejaVu Sans', sans-serif;
+  --font-heading: 'Times New Roman', Times, Georgia, serif;
+  --font-body: 'Times New Roman', Times, Georgia, serif;
 
   --hr: var(--border);
   --link: var(--accent);
@@ -27,10 +27,12 @@
 }
 
 /*
- * Light theme — old-web cream/black restyle (from the Claude Design
- * handoff). Colors, fonts and shape only; every screen, interaction
- * and data model stays exactly as built. Dark theme (the :root
- * defaults above) is untouched.
+ * Both themes share one design language (old-web restyle from the
+ * Claude Design handoff): same typography, square-cornered bordered
+ * cards/inputs/buttons, underlined links, the "NEW" badge. Only the
+ * color values differ — light is the cream/black original, dark is
+ * the same design darkened. Every screen, interaction and data model
+ * stays exactly as built regardless of theme.
  */
 :root[data-theme='light'] {
   --bg: #FDFCF6;

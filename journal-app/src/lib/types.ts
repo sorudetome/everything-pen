@@ -30,6 +30,7 @@ export interface StorageItem {
   id: string;
   content: string;
   addedAt: string;
+  tags: string[];
 }
 
 export interface ImagePosition {

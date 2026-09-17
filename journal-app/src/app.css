@@ -1008,41 +1008,37 @@ body {
   color: var(--mood-4);
 }
 
-/* "NEW" badge on Home's most recent entry — light theme only (old-web flourish) */
-.new-badge {
-  display: none;
-}
-
 /*
- * Light theme (old-web restyle) — shape and link overrides only.
- * Colors/fonts are handled entirely by the token redefinitions in
- * tokens.css; this block covers the things that aren't tokens yet
- * (border-radius, added borders, link underlines, the NEW badge).
- * Dark theme's rules above are completely untouched.
+ * Old-web restyle (Claude Design handoff) — shape and link overrides
+ * shared by both themes. Colors/fonts are handled entirely by the
+ * token redefinitions in tokens.css; this block covers the things
+ * that aren't tokens (border-radius, added borders, link underlines,
+ * the NEW badge). Dark and light differ only in their token values.
  */
-:root[data-theme='light'] .card,
-:root[data-theme='light'] .stat-tile {
+.card,
+.stat-tile {
   border-radius: 0;
   border: 1px solid var(--border);
 }
 
-:root[data-theme='light'] .field,
-:root[data-theme='light'] .primary-btn,
-:root[data-theme='light'] .secondary-btn {
+.field,
+.primary-btn,
+.secondary-btn {
   border-radius: 0;
 }
 
-:root[data-theme='light'] .chip {
+.chip {
   border-radius: 3px;
 }
 
-:root[data-theme='light'] .back-link,
-:root[data-theme='light'] .see-all {
+.back-link,
+.see-all {
   color: var(--link);
   text-decoration: underline;
 }
 
-:root[data-theme='light'] .new-badge {
+/* "NEW" badge on Home's most recent entry */
+.new-badge {
   display: inline-block;
   background: #F5D949;
   border: 1px solid var(--border);

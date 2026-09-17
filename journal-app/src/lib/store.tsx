@@ -56,9 +56,10 @@ interface StoreShape {
   deleteQuote: (id: string) => void;
   featuredQuote: Quote | null;
 
-  addStorageItem: (content: string) => void;
-  updateStorageItem: (id: string, content: string) => void;
+  addStorageItem: (content: string, tags: string[]) => void;
+  updateStorageItem: (id: string, content: string, tags: string[]) => void;
   deleteStorageItem: (id: string) => void;
+  allStorageTags: string[];
 
   addImages: (dataUrls: string[]) => void;
   updateImagePosition: (
@@ -179,16 +180,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [quotes, featuredLog]);
 
   const addStorageItem: StoreShape['addStorageItem'] = useCallback(
-    (content) => {
-      const item: StorageItem = { id: uid(), content, addedAt: new Date().toISOString() };
+    (content, tags) => {
+      const item: StorageItem = { id: uid(), content, addedAt: new Date().toISOString(), tags };
       setStorageItems((prev) => [item, ...prev]);
     },
     [setStorageItems]
   );
 
   const updateStorageItem: StoreShape['updateStorageItem'] = useCallback(
-    (id, content) => {
-      setStorageItems((prev) => prev.map((s) => (s.id === id ? { ...s, content } : s)));
+    (id, content, tags) => {
+      setStorageItems((prev) => prev.map((s) => (s.id === id ? { ...s, content, tags } : s)));
     },
     [setStorageItems]
   );
@@ -285,6 +286,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return Array.from(set).sort();
   }, [entries]);
 
+  const allStorageTags = useMemo(() => {
+    const set = new Set<string>();
+    storageItems.forEach((s) => (s.tags ?? []).forEach((t) => set.add(t)));
+    return Array.from(set).sort();
+  }, [storageItems]);
+
   const exportSnapshot: StoreShape['exportSnapshot'] = useCallback(() => {
     return {
       version: EXPORT_VERSION,
@@ -337,6 +344,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     featuredImage,
     nextPlaceholder,
     allTags,
+    allStorageTags,
     exportSnapshot,
     importSnapshot,
   };

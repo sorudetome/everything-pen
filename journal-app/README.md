@@ -4,12 +4,12 @@ React + TypeScript personal journaling app (originally built from a Claude Docs 
 
 ## Theme
 
-Two themes, toggled from the sun/moon button next to the Home heading, persisted in `localStorage` (defaults to dark):
+Two themes, toggled from the sun/moon button next to the Home heading, persisted in `localStorage` (defaults to dark). Both share one "old-web" design (from a Claude Design handoff): a single Times New Roman stack, square-cornered 1px-bordered cards/inputs/buttons, underlined links, a yellow "NEW" badge on Home's most recent entry, and a 5-hue (not graduated) mood scale — only the color values differ:
 
-- **Dark** — the original design: Georgia/Verdana, rounded cards, no borders.
-- **Light** — an "old-web" restyle from a later Claude Design handoff: cream background, black text, a single Times New Roman stack, square-cornered 1px-bordered cards/inputs/buttons, blue underlined links, a yellow "NEW" badge on Home's most recent entry, and a 5-hue (not graduated) mood scale.
+- **Dark** — the same design, darkened: near-black background, off-white text, a brighter blue/gold/green/red mood scale and border tuned for visibility on dark backgrounds.
+- **Light** — the original restyle: cream background, black text, a classic blue link color.
 
-Everything screen/interaction/data-model-wise is identical between themes — this was a colors/fonts/shape restyle only (`src/tokens.css` token overrides + a handful of shape rules in `src/app.css`, both scoped under `[data-theme="light"]`), not a functional change. The drawing canvas stays dark in both themes on purpose (like a physical sketchpad).
+Everything screen/interaction/data-model-wise is identical between themes — this is a colors/fonts/shape system only (`src/tokens.css` token values per theme + shared shape rules in `src/app.css`), not a functional change. The drawing canvas stays dark in both themes on purpose (like a physical sketchpad).
 
 ## Run
 
@@ -35,7 +35,7 @@ Open it, let it load once, then go offline (or kill the server) and reload — i
 
 ## Screens
 
-Home, Kept Words, New/Edit Entry, Entries (Calendar / Tags / All-chronological), Entry Detail, Insights, Images, and **Storage** — a general link/media/note dump: paste anything, it's timestamped and listed newest-first, with URLs auto-linkified. (This replaced an earlier "Reading" book-tracker screen entirely — no book/reading code remains.)
+Home, Kept Words, New/Edit Entry, Entries (Calendar / Tags / All-chronological), Entry Detail, Insights, Images, and **Storage** — a general link/media/note dump: paste anything, it's timestamped and listed newest-first, with URLs auto-linkified, and tagged (with its own All/Tags toggle to filter and see per-tag counts, independent of entry tags). (This replaced an earlier "Reading" book-tracker screen entirely — no book/reading code remains.)
 
 ## Editing and deletion
 
