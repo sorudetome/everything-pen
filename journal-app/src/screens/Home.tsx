@@ -1,20 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { useStore } from '../lib/store';
 import type { ExportSnapshot } from '../lib/store';
+import { downloadFile, readSnapshotFile, snapshotFilename, snapshotToText } from '../lib/backup';
 import { groupByRecency } from '../lib/grouping';
 import { EntryRow } from '../components/EntryRow';
 import type { ScreenId } from '../lib/types';
-
-function isSnapshot(data: unknown): data is ExportSnapshot {
-  if (typeof data !== 'object' || data === null) return false;
-  const d = data as Record<string, unknown>;
-  return (
-    Array.isArray(d.entries) &&
-    Array.isArray(d.quotes) &&
-    Array.isArray(d.storageItems) &&
-    Array.isArray(d.images)
-  );
-}
 
 function BackupSection() {
   const { exportSnapshot, importSnapshot } = useStore();
@@ -23,37 +13,27 @@ function BackupSection() {
   const [error, setError] = useState<string | null>(null);
   const [imported, setImported] = useState(false);
 
-  function handleExport() {
+  function handleExportJson() {
     const snapshot = exportSnapshot();
-    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const date = new Date().toISOString().slice(0, 10);
-    a.href = url;
-    a.download = `journal-backup-${date}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadFile(JSON.stringify(snapshot, null, 2), snapshotFilename('json'), 'application/json');
   }
 
-  function handleFile(fileList: FileList | null) {
+  function handleExportTxt() {
+    const snapshot = exportSnapshot();
+    downloadFile(snapshotToText(snapshot), snapshotFilename('txt'), 'text/plain');
+  }
+
+  async function handleFile(fileList: FileList | null) {
     const file = fileList?.[0];
     if (!file) return;
     setError(null);
     setImported(false);
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(reader.result as string);
-        if (!isSnapshot(parsed)) {
-          setError('That file doesn’t look like a journal backup.');
-          return;
-        }
-        setPending(parsed);
-      } catch {
-        setError('Could not read that file.');
-      }
-    };
-    reader.readAsText(file);
+    try {
+      const snapshot = await readSnapshotFile(file);
+      setPending(snapshot);
+    } catch {
+      setError('That file doesn’t look like a journal backup.');
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
@@ -61,16 +41,17 @@ function BackupSection() {
     <section className="section">
       <div className="section-label">Backup</div>
       <div className="card backup-card">
-        <div className="backup-row">
-          <p className="backup-hint">Save everything to a file, or load a previous backup.</p>
-        </div>
-        <div className="backup-actions">
-          <button className="secondary-btn" onClick={handleExport}>
-            Export data
+        <p className="backup-hint">Save everything to a file, or restore from a previous one.</p>
+        <div className="backup-actions backup-actions-column">
+          <button className="secondary-btn" onClick={handleExportJson}>
+            Export data as JSON
+          </button>
+          <button className="secondary-btn" onClick={handleExportTxt}>
+            Export as TXT
           </button>
           {!pending && (
             <button className="secondary-btn" onClick={() => fileInputRef.current?.click()}>
-              Import data
+              Restore from a saved file
             </button>
           )}
         </div>
@@ -100,7 +81,7 @@ function BackupSection() {
           onChange={(e) => handleFile(e.target.files)}
         />
         {error && <p className="lock-error backup-message">{error}</p>}
-        {imported && <p className="backup-message backup-success">Imported.</p>}
+        {imported && <p className="backup-message backup-success">Restored.</p>}
       </div>
     </section>
   );

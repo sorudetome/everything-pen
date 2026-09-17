@@ -73,6 +73,34 @@ body {
   margin-top: 16px;
 }
 
+.lock-submit-danger {
+  background: #b0584f;
+  color: var(--text);
+}
+
+.lock-forgot {
+  margin-top: 18px;
+}
+
+.lock-back {
+  margin-top: 22px;
+}
+
+.forgot-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 260px;
+  margin-top: 8px;
+}
+
+.forgot-actions .secondary-btn,
+.forgot-actions .primary-btn {
+  width: 100%;
+  margin-top: 0;
+}
+
 .screen-title {
   font-family: var(--font-heading);
   font-size: 24px;
@@ -956,6 +984,14 @@ body {
 .backup-actions .secondary-btn {
   margin-top: 0;
   flex: 1;
+}
+
+.backup-actions-column {
+  flex-direction: column;
+}
+
+.backup-actions-column .secondary-btn {
+  width: 100%;
 }
 
 .backup-confirm {
