@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo } fro
 import type {
   Drawing,
   Entry,
+  ImageFeatureLog,
   ImageItem,
   Mood,
   Quote,
@@ -19,6 +20,20 @@ export const PLACEHOLDERS = [
   'Heaven in familiar seeds.',
   'Weighed and found...',
 ];
+
+export const EXPORT_VERSION = 1;
+
+export interface ExportSnapshot {
+  version: number;
+  exportedAt: string;
+  entries: Entry[];
+  quotes: Quote[];
+  storageItems: StorageItem[];
+  images: ImageItem[];
+  featuredLog: QuoteFeatureLog[];
+  featuredImageLog: ImageFeatureLog[];
+  placeholderIndex: number;
+}
 
 interface StoreShape {
   entries: Entry[];
@@ -46,9 +61,13 @@ interface StoreShape {
     position: Partial<ImageItem['position']> | ((prev: ImageItem['position']) => Partial<ImageItem['position']>)
   ) => void;
   deleteImage: (id: string) => void;
+  featuredImage: ImageItem | null;
 
   nextPlaceholder: () => string;
   allTags: string[];
+
+  exportSnapshot: () => ExportSnapshot;
+  importSnapshot: (data: ExportSnapshot) => void;
 }
 
 const StoreContext = createContext<StoreShape | null>(null);
@@ -59,6 +78,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [storageItems, setStorageItems] = useLocalStorage<StorageItem[]>('journal.storageItems', []);
   const [images, setImages] = useLocalStorage<ImageItem[]>('journal.images', []);
   const [featuredLog, setFeaturedLog] = useLocalStorage<QuoteFeatureLog[]>('journal.featuredLog', []);
+  const [featuredImageLog, setFeaturedImageLog] = useLocalStorage<ImageFeatureLog[]>('journal.featuredImageLog', []);
   const [placeholderIndex, setPlaceholderIndex] = useLocalStorage<number>('journal.placeholderIndex', -1);
 
   const addEntry: StoreShape['addEntry'] = useCallback(
@@ -208,9 +228,34 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const deleteImage: StoreShape['deleteImage'] = useCallback(
     (id) => {
       setImages((prev) => prev.filter((img) => img.id !== id));
+      setFeaturedImageLog((prev) => prev.filter((f) => f.imageId !== id));
     },
-    [setImages]
+    [setImages, setFeaturedImageLog]
   );
+
+  useEffect(() => {
+    if (images.length === 0) return;
+    const today = todayISODate();
+    if (featuredImageLog.some((f) => f.date === today)) return;
+    const recentWindow = Math.max(0, featuredImageLog.length - Math.min(images.length - 1, 5));
+    const recentlyUsed = new Set(featuredImageLog.slice(recentWindow).map((f) => f.imageId));
+    let candidates = images.filter((img) => !recentlyUsed.has(img.id));
+    if (candidates.length === 0) candidates = images;
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+    setFeaturedImageLog((prev) => [...prev.filter((f) => f.date !== today), { date: today, imageId: pick.id }]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.length, featuredImageLog.length]);
+
+  const featuredImage = useMemo(() => {
+    if (images.length === 0) return null;
+    const today = todayISODate();
+    const existing = featuredImageLog.find((f) => f.date === today);
+    if (existing) {
+      const img = images.find((img) => img.id === existing.imageId);
+      if (img) return img;
+    }
+    return images[0];
+  }, [images, featuredImageLog]);
 
   const nextPlaceholder = useCallback(() => {
     const next = (placeholderIndex + 1) % PLACEHOLDERS.length;
@@ -223,6 +268,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     entries.forEach((e) => e.tags.forEach((t) => set.add(t)));
     return Array.from(set).sort();
   }, [entries]);
+
+  const exportSnapshot: StoreShape['exportSnapshot'] = useCallback(() => {
+    return {
+      version: EXPORT_VERSION,
+      exportedAt: new Date().toISOString(),
+      entries,
+      quotes,
+      storageItems,
+      images,
+      featuredLog,
+      featuredImageLog,
+      placeholderIndex,
+    };
+  }, [entries, quotes, storageItems, images, featuredLog, featuredImageLog, placeholderIndex]);
+
+  const importSnapshot: StoreShape['importSnapshot'] = useCallback(
+    (data) => {
+      setEntries(Array.isArray(data.entries) ? data.entries : []);
+      setQuotes(Array.isArray(data.quotes) ? data.quotes : []);
+      setStorageItems(Array.isArray(data.storageItems) ? data.storageItems : []);
+      setImages(Array.isArray(data.images) ? data.images : []);
+      setFeaturedLog(Array.isArray(data.featuredLog) ? data.featuredLog : []);
+      setFeaturedImageLog(Array.isArray(data.featuredImageLog) ? data.featuredImageLog : []);
+      setPlaceholderIndex(typeof data.placeholderIndex === 'number' ? data.placeholderIndex : -1);
+    },
+    [setEntries, setQuotes, setStorageItems, setImages, setFeaturedLog, setFeaturedImageLog, setPlaceholderIndex]
+  );
 
   const value: StoreShape = {
     entries,
@@ -244,8 +316,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     addImages,
     updateImagePosition,
     deleteImage,
+    featuredImage,
     nextPlaceholder,
     allTags,
+    exportSnapshot,
+    importSnapshot,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

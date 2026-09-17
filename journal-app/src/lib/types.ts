@@ -52,6 +52,11 @@ export interface QuoteFeatureLog {
   quoteId: string;
 }
 
+export interface ImageFeatureLog {
+  date: string; // yyyy-mm-dd
+  imageId: string;
+}
+
 export type ScreenId =
   | 'home'
   | 'words'
