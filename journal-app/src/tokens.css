@@ -19,8 +19,41 @@
   --font-heading: Georgia, 'Times New Roman', serif;
   --font-body: Verdana, Geneva, 'DejaVu Sans', sans-serif;
 
+  --hr: var(--border);
+  --link: var(--accent);
+
   --frame-w: 390px;
   --frame-h: 844px;
+}
+
+/*
+ * Light theme — old-web cream/black restyle (from the Claude Design
+ * handoff). Colors, fonts and shape only; every screen, interaction
+ * and data model stays exactly as built. Dark theme (the :root
+ * defaults above) is untouched.
+ */
+:root[data-theme='light'] {
+  --bg: #FDFCF6;
+  --bg-elevated: #F2F0E4;
+  --bg-elevated-2: #EAE6D4;
+  --bg-elevated-3: #E0DBC5;
+  --border: #000000;
+  --hr: #999999;
+  --text: #000000;
+  --text-secondary: #333333;
+  --text-tertiary: #666666;
+  --link: #0000EE;
+  --accent: #0000EE;
+  --accent-soft: rgba(0, 0, 0, 0.08);
+
+  --mood-1: #666666;
+  --mood-2: #B8860B;
+  --mood-3: #2E7D32;
+  --mood-4: #0000EE;
+  --mood-5: #CC0000;
+
+  --font-heading: 'Times New Roman', Times, Georgia, serif;
+  --font-body: 'Times New Roman', Times, Georgia, serif;
 }
 
 * {

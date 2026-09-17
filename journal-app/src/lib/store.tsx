@@ -23,6 +23,8 @@ export const PLACEHOLDERS = [
 
 export const EXPORT_VERSION = 1;
 
+export type Theme = 'dark' | 'light';
+
 export interface ExportSnapshot {
   version: number;
   exportedAt: string;
@@ -36,6 +38,9 @@ export interface ExportSnapshot {
 }
 
 interface StoreShape {
+  theme: Theme;
+  toggleTheme: () => void;
+
   entries: Entry[];
   quotes: Quote[];
   storageItems: StorageItem[];
@@ -73,6 +78,7 @@ interface StoreShape {
 const StoreContext = createContext<StoreShape | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useLocalStorage<Theme>('journal.theme', 'dark');
   const [entries, setEntries] = useLocalStorage<Entry[]>('journal.entries', []);
   const [quotes, setQuotes] = useLocalStorage<Quote[]>('journal.quotes', []);
   const [storageItems, setStorageItems] = useLocalStorage<StorageItem[]>('journal.storageItems', []);
@@ -80,6 +86,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [featuredLog, setFeaturedLog] = useLocalStorage<QuoteFeatureLog[]>('journal.featuredLog', []);
   const [featuredImageLog, setFeaturedImageLog] = useLocalStorage<ImageFeatureLog[]>('journal.featuredImageLog', []);
   const [placeholderIndex, setPlaceholderIndex] = useLocalStorage<number>('journal.placeholderIndex', -1);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'light' ? '#FDFCF6' : '#0A0A0A');
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  }, [setTheme]);
 
   const addEntry: StoreShape['addEntry'] = useCallback(
     (data) => {
@@ -297,6 +313,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value: StoreShape = {
+    theme,
+    toggleTheme,
     entries,
     quotes,
     storageItems,

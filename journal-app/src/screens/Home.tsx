@@ -4,6 +4,7 @@ import type { ExportSnapshot } from '../lib/store';
 import { downloadFile, readSnapshotFile, snapshotFilename, snapshotToText } from '../lib/backup';
 import { groupByRecency } from '../lib/grouping';
 import { EntryRow } from '../components/EntryRow';
+import { ThemeToggle } from '../components/ThemeToggle';
 import type { ScreenId } from '../lib/types';
 
 function BackupSection() {
@@ -96,6 +97,7 @@ export function Home({
 }) {
   const { entries, featuredQuote, featuredImage } = useStore();
   const groups = groupByRecency(entries).slice(0, 2);
+  const newestEntryId = entries[0]?.id ?? null;
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'long',
@@ -104,7 +106,10 @@ export function Home({
 
   return (
     <div className="screen">
-      <h1 className="screen-title">{today}</h1>
+      <div className="screen-title-row">
+        <h1 className="screen-title">{today}</h1>
+        <ThemeToggle />
+      </div>
 
       <section className="section">
         <div className="section-label">Today's words</div>
@@ -143,7 +148,7 @@ export function Home({
           <div key={group.label} className="entry-group">
             <div className="entry-group-label">{group.label}</div>
             {group.entries.map((e) => (
-              <EntryRow key={e.id} entry={e} onOpen={openEntry} />
+              <EntryRow key={e.id} entry={e} onOpen={openEntry} isNewest={e.id === newestEntryId} />
             ))}
           </div>
         ))}

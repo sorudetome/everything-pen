@@ -1,6 +1,15 @@
 # Journal
 
-React + TypeScript personal journaling app (originally built from a Claude Docs handoff spec, since customized). Dark, Georgia/Verdana, password-gated, behind a persistent bottom nav. State persists to `localStorage` — no backend.
+React + TypeScript personal journaling app (originally built from a Claude Docs handoff spec, since customized). Password-gated, behind a persistent bottom nav, light/dark mode. State persists to `localStorage` — no backend.
+
+## Theme
+
+Two themes, toggled from the sun/moon button next to the Home heading, persisted in `localStorage` (defaults to dark):
+
+- **Dark** — the original design: Georgia/Verdana, rounded cards, no borders.
+- **Light** — an "old-web" restyle from a later Claude Design handoff: cream background, black text, a single Times New Roman stack, square-cornered 1px-bordered cards/inputs/buttons, blue underlined links, a yellow "NEW" badge on Home's most recent entry, and a 5-hue (not graduated) mood scale.
+
+Everything screen/interaction/data-model-wise is identical between themes — this was a colors/fonts/shape restyle only (`src/tokens.css` token overrides + a handful of shape rules in `src/app.css`, both scoped under `[data-theme="light"]`), not a functional change. The drawing canvas stays dark in both themes on purpose (like a physical sketchpad).
 
 ## Run
 
@@ -51,4 +60,4 @@ Assumptions:
 - Insights' "total entries" stat tile doubles as a deep link to the full Entries list; Entries also has its own "All entries" chronological link.
 - No settings/account/export/notifications screens (intentionally out of scope).
 
-Not implemented (genuinely out of scope, not decided against): real backend sync, real auth, or export — this is local-only.
+Not implemented (genuinely out of scope, not decided against): real backend sync or real auth — this is local-only. Home has a Backup section (export as JSON/TXT, restore from a saved file) and the lock screen's "Forgot password?" offers the same import, or wiping to an empty log, as its only recovery paths — there's no real password reset since there's no backend.

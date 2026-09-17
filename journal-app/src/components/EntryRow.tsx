@@ -4,12 +4,21 @@ import { formatDateTime } from '../lib/storage';
 import { MoodDot } from './MoodDot';
 import { Chip } from './Chip';
 
-export function EntryRow({ entry, onOpen }: { entry: Entry; onOpen: (id: string) => void }) {
+export function EntryRow({
+  entry,
+  onOpen,
+  isNewest = false,
+}: {
+  entry: Entry;
+  onOpen: (id: string) => void;
+  isNewest?: boolean;
+}) {
   return (
     <button className="entry-row" onClick={() => onOpen(entry.id)}>
       <div className="entry-row-top">
         <MoodDot mood={entry.mood} />
         <span className="entry-row-date">{formatDateTime(entry.date)}</span>
+        {isNewest && <span className="new-badge">NEW</span>}
       </div>
       <p className="entry-row-preview">{entry.bodyText || '(no text — drawing only)'}</p>
       {entry.tags.length > 0 && (
